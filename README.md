@@ -1,1 +1,1 @@
-# React Rollup Component
+# Rollup Utils Library
