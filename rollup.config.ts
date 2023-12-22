@@ -218,13 +218,23 @@ function publicResolve(
   };
 }
 
+const output = {
+  dir: "dist",
+  entryFileNames: "[name]-[hash].js",
+  sourcemap: !isProduction,
+};
+
 const rollup: RollupOptions = {
-  output: {
-    dir: "dist",
-    format: "esm",
-    entryFileNames: "[name]-[hash].js",
-    sourcemap: !isProduction,
-  },
+  output: [
+    {
+      ...output,
+      format: "esm",
+    },
+    {
+      ...output,
+      format: "cjs",
+    },
+  ],
   plugins: [
     publicResolve(),
     nodeResolve(),
