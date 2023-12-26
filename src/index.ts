@@ -284,3 +284,11 @@ export function autoViewBox(el: SVGSVGElement | null) {
   ob.observe(el);
   return ob;
 }
+
+export function wheelScale(event: WheelEvent) {
+  const scaleOffset =
+    -event.deltaY *
+    (event.deltaMode === 1 ? 0.05 : event.deltaMode ? 1 : 0.002) *
+    (event.ctrlKey ? 10 : 1);
+  return scaleOffset;
+}
