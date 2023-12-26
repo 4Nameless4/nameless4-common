@@ -273,3 +273,14 @@ export function pan(
   });
   svg.addEventListener("pointerup", pointerup, { signal: signal.signal });
 }
+
+export function autoViewBox(el: SVGSVGElement | null) {
+  if (!el) return;
+  const ob = new ResizeObserver(() => {
+    const w = el.clientWidth;
+    const h = el.clientHeight;
+    el.setAttribute("viewBox", `-${w / 2} -${h / 2} ${w} ${h}`);
+  });
+  ob.observe(el);
+  return ob;
+}
