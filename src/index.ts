@@ -292,3 +292,85 @@ export function wheelScale(event: WheelEvent) {
     (event.ctrlKey ? 10 : 1);
   return scaleOffset;
 }
+
+type t_fun = (...arg: unknown[]) => unknown;
+
+export function funApply() {
+  if (!Function.prototype.apply) {
+    Function.prototype.apply = function (context: any, argArray?: unknown[]) {
+      context.__funApply__ = this;
+
+      var args = "";
+      var result;
+      if (argArray) {
+        for (var i = 0; i < argArray.length; i++) {
+          if (i !== 0) args += ",";
+          args += "argArray[" + i + "]";
+        }
+        result = eval("context.__funApply__(" + args + ")");
+      } else {
+        result = context.__funApply__();
+      }
+
+      delete context.__funApply__;
+      return result;
+    };
+  }
+}
+export function funCall() {
+  if (!Function.prototype.call) {
+    Function.prototype.call = function (context: any) {
+      context.__funApply__ = this;
+
+      var args = "";
+      var result;
+      if (arguments.length > 2) {
+        for (var i = 2; i < arguments.length; i++) {
+          if (i !== 0) args += ",";
+          args += "arguments[" + i + "]";
+        }
+        result = eval("context.__funApply__(" + args + ")");
+      } else {
+        result = context.__funApply__();
+      }
+
+      delete context.__funApply__;
+      return result;
+    };
+  }
+}
+export function funBind() {
+  if (!Function.prototype.bind) {
+    Function.prototype.bind = function (context) {
+      var fn = this;
+      var args = Array.prototype.slice.call(arguments, 1);
+
+      return function () {
+        var boundArgs = Array.prototype.slice.call(arguments);
+        return fn.apply(context, args.concat(boundArgs));
+      };
+    };
+  }
+}
+
+export function newFun(constructor: t_fun) {
+  if (typeof constructor !== "function") {
+    throw new TypeError("Constructor must be a function");
+  }
+  var args = Array.prototype.slice.call(arguments);
+
+  // var newObj = Object.create(constructor.prototype);
+  var f: any = function () {};
+  f.prototype = constructor.prototype;
+  var newObj = new f();
+  var result = constructor.apply(newObj, args);
+
+  if (
+    result !== null &&
+    (typeof result === "object" || typeof result === "function")
+  ) {
+    return result;
+  }
+
+  return newObj;
+}

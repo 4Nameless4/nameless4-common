@@ -24,7 +24,12 @@
     "no-use-before-define": ["error"],
     "default-case": ["error"],
     "default-case-last": ["error"],
-    "no-empty-function": ["error"]
+    "no-empty-function": "off",
+    "@typescript-eslint/no-empty-function": "off",
+    "no-var": "off",
+    "@typescript-eslint/no-explicit-any": "off",
+    "prefer-rest-params": "off",
+    "@typescript-eslint/no-this-alias": "off"
   },
   "ignorePatterns": ["test", "jest"]
 }
