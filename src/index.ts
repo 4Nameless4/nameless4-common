@@ -294,6 +294,15 @@ export function wheelScale(event: WheelEvent) {
 }
 
 type t_fun = (...arg: unknown[]) => unknown;
+interface t_new_fun {
+  new (...args: unknown[]): unknown;
+}
+
+export function objectCreate(obj: unknown) {
+  const f: t_new_fun = function () {} as any;
+  f.prototype = obj;
+  return new f();
+}
 
 export function funApply() {
   if (!Function.prototype.apply) {
@@ -360,9 +369,10 @@ export function newFun(constructor: t_fun) {
   var args = Array.prototype.slice.call(arguments);
 
   // var newObj = Object.create(constructor.prototype);
-  var f: any = function () {};
-  f.prototype = constructor.prototype;
-  var newObj = new f();
+  var newObj = objectCreate(constructor.prototype);
+  // var f: any = function () {};
+  // f.prototype = constructor.prototype;
+  // var newObj = new f();
   var result = constructor.apply(newObj, args);
 
   if (
@@ -373,4 +383,10 @@ export function newFun(constructor: t_fun) {
   }
 
   return newObj;
+}
+
+export function classExtends(child: t_fun, parent: t_fun) {
+  var prototype: any = objectCreate(parent.prototype);
+  prototype.constructor = child;
+  child.prototype = prototype;
 }

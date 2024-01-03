@@ -29,7 +29,9 @@
     "no-var": "off",
     "@typescript-eslint/no-explicit-any": "off",
     "prefer-rest-params": "off",
-    "@typescript-eslint/no-this-alias": "off"
+    "@typescript-eslint/no-this-alias": "off",
+    "@typescript-eslint/no-unused-vars": "warn",
+    "@typescript-eslint/prefer-function-type": "off"
   },
   "ignorePatterns": ["test", "jest"]
 }
