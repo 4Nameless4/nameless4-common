@@ -329,7 +329,7 @@ export function funApply() {
 export function funCall() {
   if (!Function.prototype.call) {
     Function.prototype.call = function (context: any) {
-      context.__funApply__ = this;
+      context.__funCall__ = this;
 
       var args = "";
       var result;
@@ -338,12 +338,12 @@ export function funCall() {
           if (i !== 0) args += ",";
           args += "arguments[" + i + "]";
         }
-        result = eval("context.__funApply__(" + args + ")");
+        result = eval("context.__funCall__(" + args + ")");
       } else {
-        result = context.__funApply__();
+        result = context.__funCall__();
       }
 
-      delete context.__funApply__;
+      delete context.__funCall__;
       return result;
     };
   }
@@ -384,9 +384,118 @@ export function newFun(constructor: t_fun) {
 
   return newObj;
 }
-
+// 寄生组合式继承： 需要在child函数中自己调用parent函数：function child(name, age) {SuperType.call(this, name);}
+//  相当于 es6 class 继承的构造函数中强制调用super()一样
 export function classExtends(child: t_fun, parent: t_fun) {
   var prototype: any = objectCreate(parent.prototype);
+
+  // child = function(){parent(...arg);...do something}
   prototype.constructor = child;
   child.prototype = prototype;
 }
+
+type t_promise2_state = "pending" | "fulfilled" | "rejected";
+type t_resolve<T> = (value: T) => void;
+type t_reject = (reason?: any) => void;
+type t_then<TResult1, TResult2 = never> = (
+  onfulfilled?: t_onfulfilled<TResult1> | undefined | null,
+  onrejected?: t_onrejected<TResult2> | undefined | null
+) => t_promise2_like<TResult1 | TResult2>;
+
+interface t_promise2_like<T, T2 = never> {
+  then: t_then<T, T2>;
+}
+type t_onfulfilled<T = unknown> =
+  | ((value: T) => T | t_promise2_like<T>)
+  | undefined
+  | null;
+type t_onrejected<T = never> =
+  | ((reason: any) => t_promise2_like<T>)
+  | undefined
+  | null;
+interface t_promise2<T = unknown> {
+  state: t_promise2_state;
+  result: T | any;
+  then: t_then<T>;
+}
+interface t_promise2_private<T = unknown> extends t_promise2<T> {
+  call: [t_onfulfilled<T>, t_onrejected][];
+}
+interface t_promise2Constructor<T = unknown> {
+  new (executor: (resolve: t_resolve<T>, reject: t_reject) => void): t_promise2;
+}
+const promise_state = {
+  PENDING: "pending",
+  FULFILLED: "fulfilled",
+  REJECTED: "rejected",
+} as const;
+function Promise2ResolveValueCall(value: any) {}
+function findCall(type: 0 | 1, calls: [t_onfulfilled<any>, t_onrejected][]) {
+  let resolveCalls: [t_onfulfilled<any>, t_onrejected][] = [];
+  for (let i = 0; i < calls.length; i++) {
+    if (calls[i][type]) {
+      resolveCalls = calls.slice(i);
+      break;
+    }
+  }
+  return resolveCalls;
+}
+function Promise2Constructor<T = unknown>(
+  this: t_promise2_private,
+  executor: (resolve: t_resolve<T>, reject: t_reject) => any
+) {
+  if (!(this instanceof Promise2Constructor)) {
+    throw new TypeError(
+      "Class constructor d cannot be invoked without 'new' at eval"
+    );
+  }
+  const that = this;
+  this.state = promise_state.PENDING;
+  this.result = undefined;
+  this.call = [];
+
+  function resolve(value: T) {
+    if (that.state === promise_state.PENDING) return;
+    that.state = promise_state.FULFILLED;
+    that.result = value;
+    // 判断 value 并等待
+    that.call = findCall(0, that.call);
+    // 加入微任务队列 that.call[0]
+  }
+  function reject(reason?: any) {
+    if (that.state === promise_state.PENDING) return;
+    that.state = promise_state.REJECTED;
+    that.result = reason;
+
+    that.call = findCall(1, that.call);
+  }
+
+  try {
+    executor(resolve, reject);
+  } catch (e) {
+    reject(e);
+  }
+}
+// if (r === _promise2) {
+//   throw new TypeError("Chaining cycle detected for promise");
+// }
+Promise2Constructor.prototype.then = function <T>(
+  this: t_promise2_private<T>,
+  onfulfilled?: t_onfulfilled<T> | null | undefined,
+  onrejected?: t_onrejected | null | undefined
+) {
+  this.call.push([onfulfilled, onrejected]);
+
+  const _promise2 = new Promise2((resolve, reject) => {});
+  return _promise2;
+};
+Promise2Constructor.prototype.catch = function () {};
+Promise2Constructor.prototype.finally = function () {};
+Promise2Constructor.all = function () {};
+Promise2Constructor.allSettled = function () {};
+Promise2Constructor.race = function () {};
+
+export const Promise2: t_promise2Constructor<any> = Promise2Constructor as any;
+
+const a = new Promise<number>(() => {});
+const s = new Promise2(() => {});

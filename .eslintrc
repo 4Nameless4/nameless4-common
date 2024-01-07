@@ -21,7 +21,6 @@
     "no-cond-assign": ["error"],
     "no-empty": ["warn", { "allowEmptyCatch": true }],
     "no-console": ["warn", { "allow": ["warn", "error"] }],
-    "no-use-before-define": ["error"],
     "default-case": ["error"],
     "default-case-last": ["error"],
     "no-empty-function": "off",
@@ -31,7 +30,8 @@
     "prefer-rest-params": "off",
     "@typescript-eslint/no-this-alias": "off",
     "@typescript-eslint/no-unused-vars": "warn",
-    "@typescript-eslint/prefer-function-type": "off"
+    "@typescript-eslint/prefer-function-type": "off",
+    "@typescript-eslint/consistent-indexed-object-style": "off"
   },
   "ignorePatterns": ["test", "jest"]
 }
