@@ -21,8 +21,6 @@
     "no-cond-assign": ["error"],
     "no-empty": ["warn", { "allowEmptyCatch": true }],
     "no-console": ["warn", { "allow": ["warn", "error"] }],
-    "default-case": ["error"],
-    "default-case-last": ["error"],
     "no-empty-function": "off",
     "@typescript-eslint/no-empty-function": "off",
     "no-var": "off",

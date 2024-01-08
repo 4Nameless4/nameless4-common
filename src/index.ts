@@ -397,29 +397,24 @@ export function classExtends(child: t_fun, parent: t_fun) {
 type t_promise2_state = "pending" | "fulfilled" | "rejected";
 type t_resolve<T> = (value: T) => void;
 type t_reject = (reason?: any) => void;
+type t_onfulfilled<T = unknown> = (value: T) => T | t_promise2_like<T>;
+type t_onrejected<T = never> = (reason: any) => t_promise2_like<T>;
 type t_then<TResult1, TResult2 = never> = (
-  onfulfilled?: t_onfulfilled<TResult1> | undefined | null,
-  onrejected?: t_onrejected<TResult2> | undefined | null
+  onfulfilled?: t_onfulfilled<TResult1>,
+  onrejected?: t_onrejected<TResult2>
 ) => t_promise2_like<TResult1 | TResult2>;
 
 interface t_promise2_like<T, T2 = never> {
   then: t_then<T, T2>;
 }
-type t_onfulfilled<T = unknown> =
-  | ((value: T) => T | t_promise2_like<T>)
-  | undefined
-  | null;
-type t_onrejected<T = never> =
-  | ((reason: any) => t_promise2_like<T>)
-  | undefined
-  | null;
 interface t_promise2<T = unknown> {
   state: t_promise2_state;
   result: T | any;
   then: t_then<T>;
 }
 interface t_promise2_private<T = unknown> extends t_promise2<T> {
-  call: [t_onfulfilled<T>, t_onrejected][];
+  onfulfilled: t_onfulfilled<T>[];
+  onrejected: t_onrejected[];
 }
 interface t_promise2Constructor<T = unknown> {
   new (executor: (resolve: t_resolve<T>, reject: t_reject) => void): t_promise2;
@@ -429,17 +424,6 @@ const promise_state = {
   FULFILLED: "fulfilled",
   REJECTED: "rejected",
 } as const;
-function Promise2ResolveValueCall(value: any) {}
-function findCall(type: 0 | 1, calls: [t_onfulfilled<any>, t_onrejected][]) {
-  let resolveCalls: [t_onfulfilled<any>, t_onrejected][] = [];
-  for (let i = 0; i < calls.length; i++) {
-    if (calls[i][type]) {
-      resolveCalls = calls.slice(i);
-      break;
-    }
-  }
-  return resolveCalls;
-}
 function Promise2Constructor<T = unknown>(
   this: t_promise2_private,
   executor: (resolve: t_resolve<T>, reject: t_reject) => any
@@ -452,22 +436,26 @@ function Promise2Constructor<T = unknown>(
   const that = this;
   this.state = promise_state.PENDING;
   this.result = undefined;
-  this.call = [];
+  this.onfulfilled = [];
+  this.onrejected = [];
 
   function resolve(value: T) {
     if (that.state === promise_state.PENDING) return;
     that.state = promise_state.FULFILLED;
     that.result = value;
-    // 判断 value 并等待
-    that.call = findCall(0, that.call);
-    // 加入微任务队列 that.call[0]
+
+    that.onfulfilled.forEach((f) => {
+      f(value);
+    });
   }
   function reject(reason?: any) {
     if (that.state === promise_state.PENDING) return;
     that.state = promise_state.REJECTED;
     that.result = reason;
 
-    that.call = findCall(1, that.call);
+    that.onrejected.forEach((f) => {
+      f(reason);
+    });
   }
 
   try {
@@ -479,14 +467,61 @@ function Promise2Constructor<T = unknown>(
 // if (r === _promise2) {
 //   throw new TypeError("Chaining cycle detected for promise");
 // }
+function createFun(
+  fun: any,
+  resolve: t_resolve<any>,
+  reject: t_reject,
+  self: t_promise2
+) {
+  return (value: any) => {
+    setTimeout(() => {
+      const result = fun ? fun(value) : value;
+      if (self === result) {
+        reject(new TypeError("Chaining cycle"));
+      }
+      if (
+        result &&
+        (typeof result === "function" || typeof result === "object") &&
+        typeof result.then === "function"
+      ) {
+        const then = result.then;
+        then.call(result, resolve, reject);
+      } else {
+        resolve(result);
+      }
+    });
+  };
+}
 Promise2Constructor.prototype.then = function <T>(
   this: t_promise2_private<T>,
   onfulfilled?: t_onfulfilled<T> | null | undefined,
   onrejected?: t_onrejected | null | undefined
 ) {
-  this.call.push([onfulfilled, onrejected]);
-
-  const _promise2 = new Promise2((resolve, reject) => {});
+  const onfulfill = typeof onfulfilled === "function" ? onfulfilled : false;
+  const onreject = typeof onrejected === "function" ? onrejected : false;
+  const _promise2 = new Promise2((resolve, reject) => {
+    switch (this.state) {
+      case promise_state.FULFILLED:
+      case promise_state.REJECTED: {
+        createFun(
+          promise_state.FULFILLED ? onfulfill : onreject,
+          resolve,
+          reject,
+          _promise2
+        )(this.result);
+        break;
+      }
+      case promise_state.PENDING: {
+        this.onfulfilled.push(
+          createFun(onfulfill, resolve, reject, _promise2) as any
+        );
+        this.onrejected.push(
+          createFun(onreject, resolve, reject, _promise2) as any
+        );
+        break;
+      }
+    }
+  });
   return _promise2;
 };
 Promise2Constructor.prototype.catch = function () {};
@@ -496,6 +531,3 @@ Promise2Constructor.allSettled = function () {};
 Promise2Constructor.race = function () {};
 
 export const Promise2: t_promise2Constructor<any> = Promise2Constructor as any;
-
-const a = new Promise<number>(() => {});
-const s = new Promise2(() => {});
