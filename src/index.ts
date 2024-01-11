@@ -394,140 +394,70 @@ export function classExtends(child: t_fun, parent: t_fun) {
   child.prototype = prototype;
 }
 
-type t_promise2_state = "pending" | "fulfilled" | "rejected";
-type t_resolve<T> = (value: T) => void;
-type t_reject = (reason?: any) => void;
-type t_onfulfilled<T = unknown> = (value: T) => T | t_promise2_like<T>;
-type t_onrejected<T = never> = (reason: any) => t_promise2_like<T>;
-type t_then<TResult1, TResult2 = never> = (
-  onfulfilled?: t_onfulfilled<TResult1>,
-  onrejected?: t_onrejected<TResult2>
-) => t_promise2_like<TResult1 | TResult2>;
-
-interface t_promise2_like<T, T2 = never> {
-  then: t_then<T, T2>;
-}
-interface t_promise2<T = unknown> {
-  state: t_promise2_state;
-  result: T | any;
-  then: t_then<T>;
-}
-interface t_promise2_private<T = unknown> extends t_promise2<T> {
-  onfulfilled: t_onfulfilled<T>[];
-  onrejected: t_onrejected[];
-}
-interface t_promise2Constructor<T = unknown> {
-  new (executor: (resolve: t_resolve<T>, reject: t_reject) => void): t_promise2;
-}
-const promise_state = {
-  PENDING: "pending",
-  FULFILLED: "fulfilled",
-  REJECTED: "rejected",
-} as const;
-function Promise2Constructor<T = unknown>(
-  this: t_promise2_private,
-  executor: (resolve: t_resolve<T>, reject: t_reject) => any
-) {
-  if (!(this instanceof Promise2Constructor)) {
-    throw new TypeError(
-      "Class constructor d cannot be invoked without 'new' at eval"
-    );
-  }
-  const that = this;
-  this.state = promise_state.PENDING;
-  this.result = undefined;
-  this.onfulfilled = [];
-  this.onrejected = [];
-
-  function resolve(value: T) {
-    if (that.state === promise_state.PENDING) return;
-    that.state = promise_state.FULFILLED;
-    that.result = value;
-
-    that.onfulfilled.forEach((f) => {
-      f(value);
-    });
-  }
-  function reject(reason?: any) {
-    if (that.state === promise_state.PENDING) return;
-    that.state = promise_state.REJECTED;
-    that.result = reason;
-
-    that.onrejected.forEach((f) => {
-      f(reason);
-    });
-  }
-
+export function _get(object: Record<string, any>, ...paths: string[]) {
   try {
-    executor(resolve, reject);
+    return paths.map((item) =>
+      item
+        .replace(/\[/, ".")
+        .replace(/\]/, "")
+        .split(".")
+        .reduce((now, path) => now[path], object)
+    );
   } catch (e) {
-    reject(e);
+    return [];
   }
 }
-// if (r === _promise2) {
-//   throw new TypeError("Chaining cycle detected for promise");
-// }
-function createFun(
-  fun: any,
-  resolve: t_resolve<any>,
-  reject: t_reject,
-  self: t_promise2
-) {
-  return (value: any) => {
-    setTimeout(() => {
-      const result = fun ? fun(value) : value;
-      if (self === result) {
-        reject(new TypeError("Chaining cycle"));
-      }
-      if (
-        result &&
-        (typeof result === "function" || typeof result === "object") &&
-        typeof result.then === "function"
-      ) {
-        const then = result.then;
-        then.call(result, resolve, reject);
-      } else {
-        resolve(result);
-      }
-    });
-  };
-}
-Promise2Constructor.prototype.then = function <T>(
-  this: t_promise2_private<T>,
-  onfulfilled?: t_onfulfilled<T> | null | undefined,
-  onrejected?: t_onrejected | null | undefined
-) {
-  const onfulfill = typeof onfulfilled === "function" ? onfulfilled : false;
-  const onreject = typeof onrejected === "function" ? onrejected : false;
-  const _promise2 = new Promise2((resolve, reject) => {
-    switch (this.state) {
-      case promise_state.FULFILLED:
-      case promise_state.REJECTED: {
-        createFun(
-          promise_state.FULFILLED ? onfulfill : onreject,
-          resolve,
-          reject,
-          _promise2
-        )(this.result);
-        break;
-      }
-      case promise_state.PENDING: {
-        this.onfulfilled.push(
-          createFun(onfulfill, resolve, reject, _promise2) as any
-        );
-        this.onrejected.push(
-          createFun(onreject, resolve, reject, _promise2) as any
-        );
-        break;
-      }
-    }
-  });
-  return _promise2;
-};
-Promise2Constructor.prototype.catch = function () {};
-Promise2Constructor.prototype.finally = function () {};
-Promise2Constructor.all = function () {};
-Promise2Constructor.allSettled = function () {};
-Promise2Constructor.race = function () {};
 
-export const Promise2: t_promise2Constructor<any> = Promise2Constructor as any;
+export function checkType(any: any) {
+  return Object.prototype.toString.call(any).slice(8, -1);
+}
+
+export function clone<T>(any: T, isDeep: boolean): T {
+  let result: any = any;
+  switch (checkType(result)) {
+    case "Object": {
+      const temp: Record<any, any> = {};
+      for (const i in result) {
+        temp[i] = isDeep ? clone(result[i], isDeep) : result[i];
+      }
+      result = temp;
+      break;
+    }
+    case "Array": {
+      const temp = [];
+      const len = result.length;
+      for (let i = 0; i < len; i++) {
+        temp[i] = isDeep ? clone(result[i], isDeep) : result[i];
+      }
+      result = temp;
+      break;
+    }
+    case "Function": {
+      result = new Function(`return ${result.toString()}`)();
+      break;
+    }
+    case "Date": {
+      result = new Date(result.getTime());
+      break;
+    }
+    case "Map": {
+      const temp = new Map();
+      for (const i of result) {
+        temp.set(i[0], isDeep ? clone(i[1], isDeep) : i[1]);
+      }
+      break;
+    }
+    case "Set": {
+      const temp = new Set();
+      for (const i of result) {
+        temp.add(isDeep ? clone(i, isDeep) : i);
+      }
+      break;
+    }
+    case "RegExp": {
+      result = new RegExp(result);
+      break;
+    }
+  }
+  return result;
+}
