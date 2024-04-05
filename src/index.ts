@@ -461,3 +461,31 @@ export function clone<T>(any: T, isDeep: boolean): T {
   }
   return result;
 }
+
+export function deepObjectAssign(
+  objOrigin: Record<string, any>,
+  obj2: Record<string, any>,
+  isDeep = true
+) {
+  if (!isDeep) {
+    Object.assign(objOrigin, obj2);
+    return objOrigin;
+  }
+  if (checkType(objOrigin) !== "Object" || checkType(obj2) !== "Object") {
+    return objOrigin;
+  }
+  for (const key in obj2) {
+    const val = obj2[key];
+    const origin = objOrigin[key];
+    if (
+      checkType(val) !== "Object" ||
+      checkType(origin) !== "Object" ||
+      !(key in objOrigin)
+    ) {
+      objOrigin[key] = val;
+    } else {
+      deepObjectAssign(origin, val);
+    }
+  }
+  return objOrigin
+}
