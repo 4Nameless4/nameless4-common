@@ -57,6 +57,9 @@ test("object assign deep", () => {
     k3: {
       a: "a",
     },
+    k4: {
+      a: 1
+    }
   };
   const c = {
     k1: {
@@ -64,9 +67,9 @@ test("object assign deep", () => {
         k1_1_1: {
           a: true,
           b: false,
-          c: new Map([["a", 1]]),
+          c: a.k1.k1_1.k1_1_1.c,
         },
-        k1_1_2: () => {},
+        k1_1_2: b.k1.k1_1.k1_1_2,
       },
       k1_2: {
         c: "c",
@@ -80,7 +83,11 @@ test("object assign deep", () => {
       b: 2,
       a: "a",
     },
+    k4: {
+      a: 1
+    }
   };
   const result = deepObjectAssign(a, b);
-  expect(JSON.stringify(result)).toBe(JSON.stringify(c));
+  expect(result).toEqual(c);
+  expect(result.k4).not.toBe(c.k4);
 });

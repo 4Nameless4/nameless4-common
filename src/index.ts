@@ -478,11 +478,15 @@ export function deepObjectAssign(
     const val = obj2[key];
     const origin = objOrigin[key];
     if (
-      checkType(val) !== "Object" ||
+      checkType(val) !== "Object"
+    ) {
+      objOrigin[key] = val;
+    } else if (
       checkType(origin) !== "Object" ||
       !(key in objOrigin)
     ) {
-      objOrigin[key] = val;
+      const org = objOrigin[key] = {};
+      deepObjectAssign(org, val);
     } else {
       deepObjectAssign(origin, val);
     }
