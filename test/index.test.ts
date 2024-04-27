@@ -1,5 +1,5 @@
 import { expect, test } from "@jest/globals";
-import { randomColor, deepObjectAssign } from "../src/index";
+import { randomColor, deepObjectAssign, deepObjectAssign2 } from "../src/index";
 
 test("random color", () => {
   const ran = randomColor();
@@ -87,7 +87,24 @@ test("object assign deep", () => {
       a: 1
     }
   };
+  const d = {
+    k4: {
+      a: 2,
+      c: {
+        a: 1
+      }
+    },
+    options: {
+      disabled: false
+    }
+  }
   const result = deepObjectAssign(a, b);
+  const result2 = deepObjectAssign2({}, a, b, c, d);
+  const r = Object.assign({}, c, d)
   expect(result).toEqual(c);
   expect(result.k4).not.toBe(c.k4);
+  expect(result2).toEqual(r);
+  expect(result2.k4).not.toBe(d.k4);
+  expect(result2.k4).toEqual(d.k4);
+  expect(result2.options).toEqual(d.options);
 });

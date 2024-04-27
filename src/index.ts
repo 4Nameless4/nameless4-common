@@ -493,3 +493,61 @@ export function deepObjectAssign(
   }
   return objOrigin
 }
+export function deepObjectAssign2<T extends object, U>(
+  origin: T,
+  obj: U
+): U & T
+export function deepObjectAssign2<T extends object, U, W>(
+  origin: T,
+  obj: U,
+  obj2: W
+): U & T & W
+export function deepObjectAssign2<T extends object, U, W, V>(
+  origin: T,
+  obj: U,
+  obj2: W,
+  obj3: V
+): U & T & W & V
+export function deepObjectAssign2<T extends object, U>(
+  origin: T,
+  ...obj: any[]
+): any
+// eslint-disable-next-line @typescript-eslint/ban-types
+export function deepObjectAssign2<T extends {}>(
+  origin: T
+) {
+  if (arguments.length === 1) {
+    return origin
+  }
+  if (arguments.length === 2) {
+    const obj2 = arguments[1]
+    if (checkType(origin) !== "Object" || checkType(obj2) !== "Object") {
+      return origin;
+    }
+    for (const key in obj2) {
+      const val = obj2[key];
+      const originVal = (origin as any)[key];
+      if (
+        checkType(val) !== "Object"
+      ) {
+        originVal[key] = val;
+      } else if (
+        checkType(origin) !== "Object" ||
+        !(key in origin)
+      ) {
+        const org = (origin as any)[key] = {};
+        deepObjectAssign(org, val);
+      } else {
+        deepObjectAssign(origin, val);
+      }
+    }
+    return origin
+  } else {
+    for (const i of arguments) {
+      if (origin !== i) {
+        deepObjectAssign(origin, i);
+      }
+    }
+    return origin
+  }
+}
