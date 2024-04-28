@@ -508,12 +508,11 @@ export function deepObjectAssign2<T extends object, U, W, V>(
   obj2: W,
   obj3: V
 ): U & T & W & V
-export function deepObjectAssign2<T extends object, U>(
+export function deepObjectAssign2<T extends object>(
   origin: T,
   ...obj: any[]
 ): any
-// eslint-disable-next-line @typescript-eslint/ban-types
-export function deepObjectAssign2<T extends {}>(
+export function deepObjectAssign2<T extends object>(
   origin: T
 ) {
   if (arguments.length === 1) {
