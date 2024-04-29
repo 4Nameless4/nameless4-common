@@ -477,76 +477,86 @@ export function deepObjectAssign(
   for (const key in obj2) {
     const val = obj2[key];
     const origin = objOrigin[key];
-    if (
-      checkType(val) !== "Object"
-    ) {
+    if (checkType(val) !== "Object") {
       objOrigin[key] = val;
-    } else if (
-      checkType(origin) !== "Object" ||
-      !(key in objOrigin)
-    ) {
-      const org = objOrigin[key] = {};
+    } else if (checkType(origin) !== "Object" || !(key in objOrigin)) {
+      const org = (objOrigin[key] = {});
       deepObjectAssign(org, val);
     } else {
       deepObjectAssign(origin, val);
     }
   }
-  return objOrigin
+  return objOrigin;
 }
 export function deepObjectAssign2<T extends object, U>(
   origin: T,
   obj: U
-): U & T
+): U & T;
 export function deepObjectAssign2<T extends object, U, W>(
   origin: T,
   obj: U,
   obj2: W
-): U & T & W
+): U & T & W;
 export function deepObjectAssign2<T extends object, U, W, V>(
   origin: T,
   obj: U,
   obj2: W,
   obj3: V
-): U & T & W & V
+): U & T & W & V;
 export function deepObjectAssign2<T extends object>(
   origin: T,
   ...obj: any[]
-): any
-export function deepObjectAssign2<T extends object>(
-  origin: T
-) {
+): any;
+export function deepObjectAssign2<T extends object>(origin: T) {
   if (arguments.length === 1) {
-    return origin
+    return origin;
   }
   if (arguments.length === 2) {
-    const obj2 = arguments[1]
+    const obj2 = arguments[1];
     if (checkType(origin) !== "Object" || checkType(obj2) !== "Object") {
       return origin;
     }
     for (const key in obj2) {
       const val = obj2[key];
       const originVal = (origin as any)[key];
-      if (
-        checkType(val) !== "Object"
-      ) {
+      if (checkType(val) !== "Object") {
         originVal[key] = val;
-      } else if (
-        checkType(origin) !== "Object" ||
-        !(key in origin)
-      ) {
-        const org = (origin as any)[key] = {};
+      } else if (checkType(origin) !== "Object" || !(key in origin)) {
+        const org = ((origin as any)[key] = {});
         deepObjectAssign(org, val);
       } else {
         deepObjectAssign(origin, val);
       }
     }
-    return origin
+    return origin;
   } else {
     for (const i of arguments) {
       if (origin !== i) {
         deepObjectAssign(origin, i);
       }
     }
-    return origin
+    return origin;
   }
+}
+
+export function deepEqual(val: any, val2: any): boolean {
+  if (typeof val !== "object" || typeof val2 !== "object") {
+    return val === val2;
+  } else if (val === val2) {
+    return true;
+  }
+  for (const i in val) {
+    const k1 = val[i];
+    const k2 = val2[i];
+    let flag = true;
+    if (checkType(k1) === "Object" && checkType(k2) === "Object") {
+      flag = deepEqual(k1, k2);
+    } else {
+      flag = k1 === k2;
+    }
+    if (!flag) {
+      return false;
+    }
+  }
+  return true;
 }

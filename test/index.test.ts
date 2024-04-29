@@ -1,5 +1,10 @@
 import { expect, test } from "@jest/globals";
-import { randomColor, deepObjectAssign, deepObjectAssign2 } from "../src/index";
+import {
+  randomColor,
+  deepObjectAssign,
+  deepObjectAssign2,
+  deepEqual,
+} from "../src/index";
 
 test("random color", () => {
   const ran = randomColor();
@@ -58,8 +63,8 @@ test("object assign deep", () => {
       a: "a",
     },
     k4: {
-      a: 1
-    }
+      a: 1,
+    },
   };
   const c = {
     k1: {
@@ -84,27 +89,96 @@ test("object assign deep", () => {
       a: "a",
     },
     k4: {
-      a: 1
-    }
+      a: 1,
+    },
   };
   const d = {
     k4: {
       a: 2,
       c: {
-        a: 1
-      }
+        a: 1,
+      },
     },
     options: {
-      disabled: false
-    }
-  }
+      disabled: false,
+    },
+  };
   const result = deepObjectAssign(a, b);
   const result2 = deepObjectAssign2({}, a, b, c, d);
-  const r = Object.assign({}, c, d)
+  const r = Object.assign({}, c, d);
   expect(result).toEqual(c);
   expect(result.k4).not.toBe(c.k4);
   expect(result2).toEqual(r);
   expect(result2.k4).not.toBe(d.k4);
   expect(result2.k4).toEqual(d.k4);
   expect(result2.options).toEqual(d.options);
+});
+
+test("deep equal", () => {
+  expect(deepEqual(1, "1")).toBeFalsy();
+  expect(deepEqual(1, 1)).toBeTruthy();
+  expect(deepEqual("1", "1")).toBeTruthy();
+  expect(deepEqual(1, {})).toBeFalsy();
+  expect(deepEqual({}, {})).toBeTruthy();
+  expect(deepEqual({ a: 2 }, {})).toBeFalsy();
+  expect(
+    deepEqual(
+      {
+        a: 1,
+        b: {
+          c: 3,
+          e: {
+            f: 3,
+            g: {
+              e: "2",
+              f: false,
+            },
+          },
+        },
+      },
+      {
+        a: 1,
+        b: {
+          c: 3,
+          e: {
+            f: 3,
+            g: {
+              e: "2",
+              f: false,
+            },
+          },
+        },
+      }
+    )
+  ).toBeTruthy();
+  expect(
+    deepEqual(
+      {
+        a: 1,
+        b: {
+          c: 3,
+          e: {
+            f: 3,
+            g: {
+              e: "2",
+              f: false,
+            },
+          },
+        },
+      },
+      {
+        a: 1,
+        b: {
+          c: 3,
+          e: {
+            f: 3,
+            g: {
+              e: "2",
+              f: true,
+            },
+          },
+        },
+      }
+    )
+  ).toBeFalsy();
 });
