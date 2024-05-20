@@ -560,3 +560,13 @@ export function deepEqual(val: any, val2: any): boolean {
   }
   return true;
 }
+
+export function ArrayAt<T>(arr: T[], targetIndex: number) {
+  let index = -1;
+  const len = arr.length;
+  if (!len) return null;
+  index = targetIndex % len;
+  index = len + index;
+  index = index % len;
+  return index;
+}
